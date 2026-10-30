@@ -1,0 +1,16 @@
+{
+  "name": "stockpulse-nextgen",
+  "version": "3.0.0",
+  "description": "Smart Inventory, Barcode & Supply OS with Earthy Theme Palette",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "py": "python app.py"
+  },
+  "keywords": ["inventory", "warehouse", "erp", "barcode", "nextgen"],
+  "author": "StockPulse",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

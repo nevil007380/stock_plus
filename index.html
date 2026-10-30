@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>StockPulse NextGen - Smart Inventory & Warehouse Operating System</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (Universal utility baseline) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        teaGreen: '#ccd5ae',
+                        beige: '#e9edc9',
+                        cornsilk: '#fefae0',
+                        papayaWhip: '#faedcd',
+                        lightBronze: '#d4a373',
+                        bronzeDark: '#b68250',
+                        bronzeDarker: '#8b5b2c',
+                        bronzeDeepest: '#5b3917'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Modular CSS Stylesheets (Relative paths for GitHub Pages support) -->
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body class="flex flex-col min-h-screen relative overflow-x-hidden">
+
+    <!-- Ambient Glow Orbs -->
+    <div class="ambient-orb orb-tea" style="width: 320px; height: 320px; top: -60px; right: 5%;"></div>
+    <div class="ambient-orb orb-bronze" style="width: 360px; height: 360px; bottom: 10%; left: -60px; animation-delay: -6s;"></div>
+
+    <!-- Toast Notifications Live Region -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none" aria-live="polite" style="max-width: 380px; width: 100%;"></div>
+
+    <!-- Floating Batch Actions Toolbar -->
+    <div id="batch-actions-bar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 glass-panel px-5 py-3 shadow-2xl border flex items-center gap-4 animate-pop-in"
+         style="background-color: var(--card-surface); border-color: var(--light-bronze);">
+        <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-lightBronze animate-ping"></span>
+            <span id="batch-selected-count" class="text-xs font-bold font-mono" style="color: var(--text-heading);">0 selected</span>
+        </div>
+        <div class="h-4 w-px bg-borderSubtle"></div>
+        <div class="flex items-center gap-2">
+            <button onclick="batchRestockSelected()" class="btn btn-secondary py-1 px-3 text-xs font-bold" title="Add +10 units to all selected">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Restock +10
+            </button>
+            <button onclick="batchDeleteSelected()" class="btn btn-danger-outline py-1 px-3 text-xs font-bold" title="Delete selected products">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete
+            </button>
+            <button onclick="clearSelection()" class="btn btn-outline py-1 px-2.5 text-xs">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-30 backdrop-blur-md border-b" style="background-color: rgba(251, 249, 241, 0.94); border-color: var(--border-subtle);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-3">
+                
+                <!-- Logo & Brand Badge -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl p-0.5 flex items-center justify-center shadow-md" 
+                         style="background: linear-gradient(135deg, var(--tea-green), var(--light-bronze));">
+                        <div class="w-full h-full rounded-[14px] flex items-center justify-center" style="background-color: var(--card-surface);">
+                            <i data-lucide="boxes" style="width: 20px; height: 20px; color: var(--bronze-dark);"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-xl tracking-tight" style="color: var(--text-heading);">StockPulse</span>
+                            <span class="px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider rounded-full border" 
+                                  style="background-color: var(--tea-green); color: var(--bronze-deepest); border-color: var(--beige);">
+                                NextGen v3.2
+                            </span>
+                        </div>
+                        <p class="text-xs hidden sm:block" style="color: var(--text-muted);">Smart Inventory, Barcode & Supply OS</p>
+                    </div>
+                </div>
+
+                <!-- Global Search (Desktop) -->
+                <div class="flex-1 max-w-md hidden md:block">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style="color: var(--text-muted);"></i>
+                        <input type="text" id="global-search" placeholder="Search product, SKU, category, tag (Press '/' or Ctrl+K)..." 
+                               class="form-input pl-10 pr-9 py-2 text-sm">
+                        <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-heading">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Controls Cluster -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    
+                    <!-- Data Sync Dropdown Trigger -->
+                    <button onclick="toggleExportMenu()" class="btn btn-outline py-2 px-3 text-xs" title="Export / Import Data">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Data Sync</span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                    </button>
+
+                    <!-- Export/Import Dropdown Popup -->
+                    <div id="export-dropdown" class="hidden absolute right-48 top-14 z-50 glass-panel p-2 space-y-1 shadow-lg animate-fade-in" style="width: 220px;">
+                        <button onclick="exportToCSV()" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg hover:bg-beige flex items-center gap-2" style="color: var(--text-heading);">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i> Export to CSV (Excel)
+                        </button>
+                        <button onclick="exportToJSON()" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg hover:bg-beige flex items-center gap-2" style="color: var(--text-heading);">
+                            <i data-lucide="file-json" class="w-4 h-4 text-indigo-500"></i> Backup Full JSON
+                        </button>
+                        <label class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg hover:bg-beige flex items-center gap-2 cursor-pointer" style="color: var(--text-heading);">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-600"></i> Import CSV / JSON
+                            <input type="file" id="import-file-input" accept=".csv,.json" class="hidden" onchange="handleFileImport(event)">
+                        </label>
+                        <div class="border-t my-1" style="border-color: var(--border-subtle);"></div>
+                        <button onclick="openAuditModal()" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg hover:bg-beige flex items-center gap-2" style="color: var(--text-heading);">
+                            <i data-lucide="history" class="w-4 h-4 text-bronze-dark"></i> View Stock Audit Log
+                        </button>
+                    </div>
+
+                    <!-- Theme Toggle Button -->
+                    <button onclick="toggleTheme()" class="btn btn-outline btn-icon" title="Toggle Earthy Dark/Light Mode" aria-label="Toggle Theme">
+                        <i id="theme-toggle-icon" data-lucide="moon" class="w-4 h-4" style="color: var(--light-bronze);"></i>
+                    </button>
+
+                    <!-- Fast Add Product Button -->
+                    <button onclick="openAddProductModal()" class="btn btn-primary py-2 px-3.5 text-xs font-bold btn-ripple" title="Add New Product (Alt+N)">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Add Product</span>
+                    </button>
+
+                    <!-- User Profile Pill & Dropdown -->
+                    <div class="relative">
+                        <button onclick="toggleProfileMenu()" class="flex items-center gap-2 pl-2 pr-3 py-1 rounded-xl border hover:opacity-90 transition" 
+                                style="background-color: var(--card-surface-soft); border-color: var(--border-subtle);">
+                            <div id="user-profile-avatar" class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs" 
+                                 style="background-color: var(--tea-green); color: var(--bronze-deepest);">
+                                AD
+                            </div>
+                            <div class="text-left hidden lg:block">
+                                <div id="user-profile-name" class="text-xs font-bold truncate max-w-[100px]" style="color: var(--text-heading);">User</div>
+                                <div id="user-profile-role" class="text-[10px] truncate max-w-[100px]" style="color: var(--text-muted);">Manager</div>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-muted"></i>
+                        </button>
+
+                        <div id="profile-dropdown" class="hidden absolute right-0 top-12 z-50 glass-panel p-2 space-y-1 shadow-lg animate-fade-in" style="width: 200px;">
+                            <div class="px-3 py-2 border-b" style="border-color: var(--border-subtle);">
+                                <span class="text-[10px] uppercase font-bold text-muted block">Signed In As</span>
+                                <span class="text-xs font-bold truncate block" style="color: var(--text-heading);" id="dropdown-user-email">Session Active</span>
+                            </div>
+                            <button onclick="window.location.href='login.html'" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg hover:bg-beige flex items-center gap-2" style="color: var(--text-heading);">
+                                <i data-lucide="user-switch" class="w-4 h-4 text-bronze-dark"></i> Switch Account
+                            </button>
+                            <button onclick="AuthManager.logout()" class="w-full text-left px-3 py-2 text-xs font-bold rounded-lg hover:bg-rose-50 text-rose-600 flex items-center gap-2">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 relative z-10">
+
+        <!-- Mobile Search Field -->
+        <div class="block md:hidden">
+            <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style="color: var(--text-muted);"></i>
+                <input type="text" id="mobile-global-search" placeholder="Search catalog, SKU, tags..." 
+                       class="form-input pl-10 pr-4 py-2.5 text-sm">
+            </div>
+        </div>
+
+        <!-- Metric Analytics Row -->
+        <section id="analytics-row" class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-5">
+            
+            <!-- Total Catalog SKUs -->
+            <div class="glass-panel card-interactive p-4 relative overflow-hidden cursor-pointer" onclick="filterByStatus('ALL')" title="Click to view all products">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--text-muted);">Total Products</p>
+                        <h3 id="stat-total-skus" class="text-2xl sm:text-3xl font-extrabold mt-1" style="color: var(--text-heading);">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: var(--beige); color: var(--bronze-darker);">
+                        <i data-lucide="package" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center text-xs font-semibold" style="color: var(--bronze-dark);">
+                    <i data-lucide="layers" class="w-3.5 h-3.5 inline mr-1"></i> Active Line items
+                </div>
+            </div>
+
+            <!-- Total Units in Warehouse -->
+            <div class="glass-panel card-interactive p-4 relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--text-muted);">Total Units</p>
+                        <h3 id="stat-total-units" class="text-2xl sm:text-3xl font-extrabold mt-1" style="color: var(--text-heading);">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: var(--tea-green); color: var(--bronze-deepest);">
+                        <i data-lucide="boxes" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs" style="color: var(--text-muted);">
+                    Combined physical items
+                </div>
+            </div>
+
+            <!-- Low Stock Warning -->
+            <div class="glass-panel card-interactive p-4 relative overflow-hidden border-amber-300/60 cursor-pointer" 
+                 style="background-color: var(--papaya-whip);" onclick="filterByStatus('LOW_STOCK')" title="Click to view low stock items">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--badge-low-stock-text);">Low Stock</p>
+                        <h3 id="stat-low-stock" class="text-2xl sm:text-3xl font-extrabold mt-1" style="color: var(--badge-low-stock-text);">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center pulse-subtle" style="background-color: rgba(255,255,255,0.7); color: var(--badge-low-stock-text);">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs font-semibold" style="color: var(--badge-low-stock-text);">
+                    <span>Below threshold</span>
+                </div>
+            </div>
+
+            <!-- Out of Stock Alert -->
+            <div class="glass-panel card-interactive p-4 relative overflow-hidden cursor-pointer" 
+                 style="background-color: var(--badge-out-stock-bg);" onclick="filterByStatus('OUT_OF_STOCK')" title="Click to view out of stock items">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--badge-out-stock-text);">Out of Stock</p>
+                        <h3 id="stat-out-stock" class="text-2xl sm:text-3xl font-extrabold mt-1" style="color: var(--badge-out-stock-text);">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: rgba(255,255,255,0.7); color: var(--badge-out-stock-text);">
+                        <i data-lucide="alert-octagon" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs font-semibold" style="color: var(--badge-out-stock-text);">
+                    <span>Requires restock</span>
+                </div>
+            </div>
+
+            <!-- Total Valuation & Profit Potential -->
+            <div class="glass-panel card-interactive p-4 relative overflow-hidden col-span-2 lg:col-span-1" style="background: linear-gradient(135deg, var(--card-surface), var(--cornsilk));">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--text-muted);">Inventory Value</p>
+                        <h3 id="stat-total-value" class="text-2xl sm:text-3xl font-extrabold mt-1" style="color: var(--bronze-darker);">$0.00</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: var(--tea-green); color: var(--badge-in-stock-text);">
+                        <i data-lucide="dollar-sign" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs flex justify-between items-center" style="color: var(--text-muted);">
+                    <span>Profit Est: <strong id="stat-profit-potential" style="color: var(--badge-in-stock-text);">$0</strong></span>
+                    <button onclick="restockAllCritical()" class="text-[10px] font-bold underline hover:opacity-80" style="color: var(--bronze-dark);">Auto-Restock</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workspace Controls Bar -->
+        <div id="workspace-controls" class="glass-panel p-4 space-y-4">
+            
+            <!-- Category Tabs -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1" id="category-tabs" role="tablist"></div>
+
+            <!-- Secondary Controls & View Switcher -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t" style="border-color: var(--border-subtle);">
+                
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Status Filter -->
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-semibold" style="color: var(--text-muted);">Status:</span>
+                        <select id="status-filter" onchange="handleStatusChange(event)" class="form-select text-xs py-1.5 px-2.5" style="width: auto;">
+                            <option value="ALL">All Statuses</option>
+                            <option value="IN_STOCK">In Stock</option>
+                            <option value="LOW_STOCK">Low Stock Alert</option>
+                            <option value="OUT_OF_STOCK">Out of Stock</option>
+                        </select>
+                    </div>
+
+                    <!-- Sort Order -->
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-semibold" style="color: var(--text-muted);">Sort By:</span>
+                        <select id="sort-filter" onchange="handleSortChange(event)" class="form-select text-xs py-1.5 px-2.5" style="width: auto;">
+                            <option value="name_asc">Name (A → Z)</option>
+                            <option value="name_desc">Name (Z → A)</option>
+                            <option value="qty_asc">Stock (Lowest First)</option>
+                            <option value="qty_desc">Stock (Highest First)</option>
+                            <option value="price_asc">Price (Low → High)</option>
+                            <option value="price_desc">Price (High → Low)</option>
+                            <option value="value_desc">Valuation (High → Low)</option>
+                        </select>
+                    </div>
+
+                    <!-- Quick Urgent Reorder Chip -->
+                    <button id="quick-alert-btn" onclick="toggleQuickLowStock()" class="btn btn-outline py-1 px-2.5 text-xs">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-600"></i>
+                        <span>Urgent Reorders</span>
+                    </button>
+                </div>
+
+                <!-- Right View Mode Toggle & Seed Reset -->
+                <div class="flex items-center gap-2 ml-auto">
+                    <div class="flex items-center rounded-xl p-1 border" style="background-color: var(--card-surface-soft); border-color: var(--border-subtle);">
+                        <button id="view-mode-grid" onclick="setViewMode('grid')" class="btn btn-icon p-1.5 text-xs rounded-lg" title="Card Grid View">
+                            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                        </button>
+                        <button id="view-mode-table" onclick="setViewMode('table')" class="btn btn-icon p-1.5 text-xs rounded-lg" title="Dense Table View">
+                            <i data-lucide="table" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <button onclick="restoreSeedData()" title="Restore Sample Demo Inventory" class="btn btn-outline py-1.5 px-2.5 text-xs">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Reset Demo</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Feed -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between px-1">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-base font-bold flex items-center gap-2" style="color: var(--text-heading);">
+                        <i data-lucide="box" class="w-4 h-4" style="color: var(--light-bronze);"></i>
+                        <span>Inventory Catalog</span>
+                    </h2>
+                    <span id="product-count-badge" class="text-xs px-2.5 py-0.5 rounded-full font-bold border" 
+                          style="background-color: var(--beige); color: var(--bronze-deepest); border-color: var(--tea-green);">
+                        0 items
+                    </span>
+                </div>
+                
+                <div class="text-xs" style="color: var(--text-muted);">
+                    Shortcut: <kbd class="px-1.5 py-0.5 rounded border text-[10px] font-mono" style="background-color: var(--card-surface); border-color: var(--border-strong);">Alt+N</kbd> New Product
+                </div>
+            </div>
+
+            <div id="product-feed-container"></div>
+        </div>
+
+    </main>
+
+    <!-- Modals (Add/Edit, Adjust, Barcode, Audit) -->
+
+    <!-- Add / Edit Modal -->
+    <div id="product-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm" 
+         style="background-color: rgba(23, 21, 18, 0.65);" role="dialog">
+        <div class="glass-panel modal-spring w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl border" 
+             style="background-color: var(--card-surface); border-color: var(--border-strong);">
+            
+            <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: var(--border-subtle); background-color: var(--cornsilk);">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background-color: var(--tea-green); color: var(--bronze-deepest);">
+                        <i id="product-modal-icon" data-lucide="package-plus" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 id="product-modal-title" class="font-extrabold text-base" style="color: var(--text-heading);">Add New Product</h3>
+                        <p class="text-[11px]" style="color: var(--text-muted);">Enter SKU details, stock levels and pricing</p>
+                    </div>
+                </div>
+                <button onclick="closeProductModal()" class="btn btn-outline btn-icon p-1.5" title="Close (Esc)">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form id="product-modal-form" onsubmit="handleProductModalSubmit(event)" class="overflow-y-auto px-6 py-5 space-y-4 flex-1">
+                <input type="hidden" id="modal-field-id" value="">
+
+                <div>
+                    <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Product Name *</label>
+                    <input type="text" id="modal-field-name" required placeholder="e.g. Ergonomic Mechanical Keyboard" class="form-input">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-bold" style="color: var(--text-heading);">SKU Code *</label>
+                            <button type="button" onclick="generateAutoSKU()" class="text-[10px] font-bold underline hover:opacity-80" style="color: var(--light-bronze);">
+                                Auto-Generate
+                            </button>
+                        </div>
+                        <input type="text" id="modal-field-sku" required placeholder="SKU-8024" class="form-input font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Category *</label>
+                        <select id="modal-field-category" required class="form-select">
+                            <option value="Electronics">Electronics</option>
+                            <option value="Apparel">Apparel</option>
+                            <option value="Grocery">Grocery</option>
+                            <option value="Hardware">Hardware</option>
+                            <option value="Office Supplies">Office Supplies</option>
+                            <option value="Health & Beauty">Health & Beauty</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Cost ($)</label>
+                        <input type="number" id="modal-field-cost" step="0.01" min="0" placeholder="15.00" oninput="calculateMarginPreview()" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Selling ($) *</label>
+                        <input type="number" id="modal-field-price" step="0.01" min="0" required placeholder="29.99" oninput="calculateMarginPreview()" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Quantity *</label>
+                        <input type="number" id="modal-field-quantity" min="0" required placeholder="50" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Min Limit *</label>
+                        <input type="number" id="modal-field-threshold" min="0" required placeholder="8" class="form-input">
+                    </div>
+                </div>
+
+                <div id="margin-preview-box" class="p-2.5 rounded-xl border text-xs flex items-center justify-between" 
+                     style="background-color: var(--papaya-whip); border-color: var(--border-subtle); color: var(--bronze-deepest);">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="calculator" class="w-3.5 h-3.5 text-bronze-dark"></i>
+                        <span>Estimated Profit Margin:</span>
+                    </div>
+                    <span id="margin-percentage-badge" class="font-extrabold font-mono">0.0% ($0.00 / unit)</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Product Image URL (Optional)</label>
+                    <input type="url" id="modal-field-image" placeholder="https://images.unsplash.com/..." oninput="updateModalImagePreview()" class="form-input mb-2">
+                    
+                    <div id="modal-image-preview-box" class="h-28 rounded-xl border-2 border-dashed flex items-center justify-center overflow-hidden relative" 
+                         style="border-color: var(--border-strong); background-color: var(--card-surface-soft);">
+                        <img id="modal-preview-img" src="" class="w-full h-full object-cover hidden" alt="Product Image Preview" onerror="handleModalImageError()">
+                        <div id="modal-preview-placeholder" class="text-center p-3" style="color: var(--text-faint);">
+                            <i data-lucide="image" class="w-6 h-6 mx-auto mb-1"></i>
+                            <span class="text-xs">Live image preview will render here</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t" style="border-color: var(--border-subtle);">
+                    <button type="button" onclick="closeProductModal()" class="btn btn-outline py-2 px-4 text-xs font-semibold">Cancel</button>
+                    <button type="submit" id="modal-submit-btn" class="btn btn-primary py-2 px-5 text-xs font-bold btn-ripple">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span id="modal-submit-text">Save Product</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Stock Adjust Modal -->
+    <div id="adjust-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm" 
+         style="background-color: rgba(23, 21, 18, 0.65);" role="dialog">
+        <div class="glass-panel modal-spring w-full max-w-md p-6 space-y-4 shadow-2xl border" 
+             style="background-color: var(--card-surface); border-color: var(--border-strong);">
+            
+            <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-subtle);">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background-color: var(--tea-green); color: var(--bronze-deepest);">
+                        <i data-lucide="sliders" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm" style="color: var(--text-heading);">Fast Stock Adjustment</h3>
+                        <p class="text-[11px]" style="color: var(--text-muted);">Log physical stock movement</p>
+                    </div>
+                </div>
+                <button onclick="closeAdjustModal()" class="btn btn-outline btn-icon p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 rounded-xl border" style="background-color: var(--cornsilk); border-color: var(--border-subtle);">
+                <img id="adjust-product-img" src="" class="w-12 h-12 rounded-lg object-cover border" style="border-color: var(--border-strong);" alt="">
+                <div class="min-w-0 flex-1">
+                    <h4 id="adjust-product-name" class="font-bold text-sm truncate" style="color: var(--text-heading);">Product Name</h4>
+                    <span id="adjust-product-sku" class="text-xs font-mono" style="color: var(--text-muted);">SKU-0000</span>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl border text-center space-y-1" style="background-color: var(--card-surface-soft); border-color: var(--border-subtle);">
+                <span class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--text-muted);">Current On-Hand Stock</span>
+                <div id="adjust-current-qty" class="text-4xl font-extrabold font-mono" style="color: var(--light-bronze);">0</div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="applyAdjustStep(-10)" class="btn btn-outline py-2 text-xs font-bold">-10</button>
+                <button onclick="applyAdjustStep(-1)" class="btn btn-outline py-2 text-xs font-bold text-rose-600">-1</button>
+                <button onclick="applyAdjustStep(1)" class="btn btn-outline py-2 text-xs font-bold text-emerald-600">+1</button>
+                <button onclick="applyAdjustStep(10)" class="btn btn-outline py-2 text-xs font-bold">+10</button>
+            </div>
+
+            <div class="space-y-2 pt-1">
+                <div>
+                    <label class="block text-[11px] font-bold mb-1" style="color: var(--text-muted);">Set Specific Exact Count:</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="adjust-exact-input" min="0" placeholder="Count..." class="form-input text-sm">
+                        <button onclick="applyAdjustExact()" class="btn btn-secondary py-1.5 px-3 text-xs">Set</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold mb-1" style="color: var(--text-muted);">Movement Reason / Note:</label>
+                    <select id="adjust-reason-select" class="form-select text-xs">
+                        <option value="Restock / Purchase Shipment">Restock / Purchase Shipment</option>
+                        <option value="Customer Sale / Outflow">Customer Sale / Outflow</option>
+                        <option value="Inventory Audit Discrepancy">Inventory Audit Discrepancy</option>
+                        <option value="Damaged / Expired Goods">Damaged / Expired Goods</option>
+                        <option value="Return to Vendor">Return to Vendor</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="closeAdjustModal()" class="w-full btn btn-primary py-2.5 text-xs font-bold btn-ripple">
+                    Done & Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barcode & Shelf Tag Modal -->
+    <div id="barcode-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm" 
+         style="background-color: rgba(23, 21, 18, 0.65);" role="dialog">
+        <div class="glass-panel modal-spring w-full max-w-sm p-6 space-y-4 shadow-2xl border" 
+             style="background-color: var(--card-surface); border-color: var(--border-strong);">
+            
+            <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--border-subtle);">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="barcode" class="w-5 h-5" style="color: var(--light-bronze);"></i>
+                    <h3 class="font-bold text-sm" style="color: var(--text-heading);">Shelf Tag & Barcode</h3>
+                </div>
+                <button onclick="closeBarcodeModal()" class="btn btn-outline btn-icon p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div id="printable-shelf-tag" class="p-4 rounded-xl border-2 border-dashed bg-white text-slate-900 space-y-3 text-center shadow-inner" style="border-color: #333333;">
+                <div class="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <span id="tag-category">Category</span>
+                    <span id="tag-unit">STOCKPULSE-LABEL</span>
+                </div>
+
+                <h3 id="tag-name" class="font-black text-base line-clamp-2 text-slate-900">Product Title</h3>
+
+                <div class="py-2 flex flex-col items-center justify-center">
+                    <div id="tag-barcode-svg-container" class="flex justify-center my-1"></div>
+                    <span id="tag-sku" class="font-mono text-xs font-black tracking-widest text-slate-800 mt-1">SKU-0000</span>
+                </div>
+
+                <div class="pt-2 border-t border-slate-200 flex items-baseline justify-between">
+                    <span class="text-xs font-semibold text-slate-500">RETAIL PRICE</span>
+                    <span id="tag-price" class="text-2xl font-black text-slate-950">$0.00</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="printShelfTag()" class="w-full btn btn-primary py-2 text-xs font-bold btn-ripple">
+                    <i data-lucide="printer" class="w-4 h-4"></i> Print Tag
+                </button>
+                <button onclick="closeBarcodeModal()" class="btn btn-outline py-2 px-3 text-xs">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Log Modal -->
+    <div id="audit-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm" 
+         style="background-color: rgba(23, 21, 18, 0.65);" role="dialog">
+        <div class="glass-panel modal-spring w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl border" 
+             style="background-color: var(--card-surface); border-color: var(--border-strong);">
+            
+            <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: var(--border-subtle); background-color: var(--cornsilk);">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background-color: var(--tea-green); color: var(--bronze-deepest);">
+                        <i data-lucide="history" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm" style="color: var(--text-heading);">Stock Movement Audit Log</h3>
+                        <p class="text-[11px]" style="color: var(--text-muted);">Real-time log of stock changes, edits and events</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="clearAuditLog()" class="btn btn-outline py-1 px-2.5 text-xs">Clear Log</button>
+                    <button onclick="closeAuditModal()" class="btn btn-outline btn-icon p-1">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="audit-log-container" class="overflow-y-auto px-6 py-4 space-y-2 flex-1 text-xs"></div>
+        </div>
+    </div>
+
+    <!-- Modular JS Scripts (Relative paths for GitHub Pages support) -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

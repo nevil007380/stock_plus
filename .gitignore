@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+ENV/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Database & OS
+*.sqlite3
+.DS_Store
+Thumbs.db

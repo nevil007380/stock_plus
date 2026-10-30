@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockPulse NextGen - Authentication Portal</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (Universal utility baseline) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        teaGreen: '#ccd5ae',
+                        beige: '#e9edc9',
+                        cornsilk: '#fefae0',
+                        papayaWhip: '#faedcd',
+                        lightBronze: '#d4a373',
+                        bronzeDark: '#b68250',
+                        bronzeDeep: '#5b3917'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Modular Stylesheets -->
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="auth-canvas">
+
+    <!-- Ambient Floating Orbs for Mesmerizing Background Atmosphere -->
+    <div class="ambient-orb orb-tea" style="width: 380px; height: 380px; top: -80px; left: -100px;"></div>
+    <div class="ambient-orb orb-bronze" style="width: 420px; height: 420px; bottom: -120px; right: -80px; animation-delay: -5s;"></div>
+    <div class="ambient-orb orb-papaya" style="width: 320px; height: 320px; top: 35%; right: 15%; animation-delay: -9s;"></div>
+
+    <!-- Theme Switcher in top corner -->
+    <div class="absolute top-5 right-5 z-20">
+        <button onclick="toggleTheme()" class="btn btn-outline btn-icon" title="Toggle Theme" aria-label="Toggle Theme">
+            <i id="theme-toggle-icon" data-lucide="moon" class="w-4 h-4" style="color: var(--light-bronze);"></i>
+        </button>
+    </div>
+
+    <!-- Main Auth Card Container -->
+    <div class="auth-card p-6 sm:p-8 space-y-6">
+
+        <!-- Top Header & Animated Emblem -->
+        <div class="text-center space-y-2">
+            <div class="auth-logo-badge mx-auto">
+                <div class="w-11 h-11 rounded-[14px] flex items-center justify-center" style="background-color: var(--card-surface);">
+                    <i data-lucide="boxes" style="width: 24px; height: 24px; color: var(--bronze-dark);"></i>
+                </div>
+            </div>
+
+            <div>
+                <h1 class="text-2xl font-black tracking-tight" style="color: var(--text-heading);">StockPulse</h1>
+                <p class="text-xs" style="color: var(--text-muted);">Smart Warehouse & Supply Chain Operating System</p>
+            </div>
+        </div>
+
+        <!-- Pill Tabs Switcher (Sign In vs Create Account) -->
+        <div class="auth-tabs-pill">
+            <button id="tab-btn-login" onclick="switchAuthTab('login')" class="auth-tab-btn active">
+                Sign In
+            </button>
+            <button id="tab-btn-register" onclick="switchAuthTab('register')" class="auth-tab-btn">
+                Create Account
+            </button>
+        </div>
+
+        <!-- Alert Banner Area -->
+        <div id="auth-alert" class="hidden p-3 rounded-xl border text-xs font-semibold flex items-center gap-2 animate-fade-in"></div>
+
+        <!-- Viewports Container -->
+        <div class="auth-view-container">
+
+            <!-- ==========================================
+                 VIEW 1: SIGN IN FORM
+                 ========================================== -->
+            <div id="view-login" class="auth-view active-view space-y-4">
+                <form id="form-login" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Work Email</label>
+                        <div class="relative">
+                            <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style="color: var(--text-muted);"></i>
+                            <input type="email" id="login-email" required placeholder="manager@stockpulse.io" 
+                                   class="form-input pl-10 text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-bold" style="color: var(--text-heading);">Password</label>
+                            <a href="javascript:void(0)" onclick="fillDemoCredentials('manager@stockpulse.io', 'demo1234')" class="text-[11px] font-bold underline hover:opacity-80" style="color: var(--light-bronze);">
+                                Quick Fill Demo
+                            </a>
+                        </div>
+                        <div class="relative">
+                            <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style="color: var(--text-muted);"></i>
+                            <input type="password" id="login-password" required placeholder="••••••••" 
+                                   class="form-input pl-10 pr-10 text-sm">
+                            <button type="button" onclick="togglePasswordVisibility('login-password', 'eye-login')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading">
+                                <i id="eye-login" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit-login" class="w-full btn btn-primary py-3 text-sm font-bold btn-ripple mt-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>Enter Warehouse Workspace</span>
+                    </button>
+                </form>
+
+                <!-- Demo Fast-Login Pills -->
+                <div class="pt-3 border-t space-y-2" style="border-color: var(--border-subtle);">
+                    <span class="text-[10px] font-bold uppercase tracking-wider block text-center" style="color: var(--text-faint);">
+                        1-Click Demo Evaluation Profiles
+                    </span>
+                    <div class="flex items-center justify-center gap-2 flex-wrap">
+                        <button type="button" onclick="fastLoginDemo('manager@stockpulse.io', 'demo1234', 'Warehouse Manager')" class="demo-role-pill">
+                            📦 Manager
+                        </button>
+                        <button type="button" onclick="fastLoginDemo('admin@stockpulse.io', 'demo1234', 'System Admin')" class="demo-role-pill">
+                            🛡️ Administrator
+                        </button>
+                        <button type="button" onclick="fastLoginDemo('specialist@stockpulse.io', 'demo1234', 'Inventory Specialist')" class="demo-role-pill">
+                            🔍 Specialist
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==========================================
+                 VIEW 2: CREATE ACCOUNT FORM
+                 ========================================== -->
+            <div id="view-register" class="auth-view hidden-view space-y-4">
+                <form id="form-register" onsubmit="handleRegisterSubmit(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Full Name *</label>
+                        <div class="relative">
+                            <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style="color: var(--text-muted);"></i>
+                            <input type="text" id="reg-name" required placeholder="Elena Rodriguez" class="form-input pl-10 text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Email Address *</label>
+                        <div class="relative">
+                            <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style="color: var(--text-muted);"></i>
+                            <input type="email" id="reg-email" required placeholder="elena@company.com" class="form-input pl-10 text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Assigned Role *</label>
+                        <select id="reg-role" required class="form-select text-sm">
+                            <option value="Inventory Specialist">Inventory Specialist</option>
+                            <option value="Warehouse Manager">Warehouse Manager</option>
+                            <option value="Logistics Supervisor">Logistics Supervisor</option>
+                            <option value="Supply Chain Auditor">Supply Chain Auditor</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Create Password *</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style="color: var(--text-muted);"></i>
+                            <input type="password" id="reg-password" required placeholder="At least 6 characters" oninput="checkPasswordStrength()" 
+                                   class="form-input pl-10 pr-10 text-sm">
+                            <button type="button" onclick="togglePasswordVisibility('reg-password', 'eye-reg')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading">
+                                <i id="eye-reg" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <!-- Animated Strength Bar -->
+                        <div class="strength-track">
+                            <div id="strength-meter-bar" class="strength-bar"></div>
+                        </div>
+                        <span id="strength-text" class="text-[10px] font-semibold mt-1 block" style="color: var(--text-faint);">Password strength indicator</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold mb-1" style="color: var(--text-heading);">Confirm Password *</label>
+                        <input type="password" id="reg-confirm-password" required placeholder="Repeat password" class="form-input text-sm">
+                    </div>
+
+                    <button type="submit" id="btn-submit-reg" class="w-full btn btn-primary py-3 text-sm font-bold btn-ripple mt-2">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>Register & Launch Workspace</span>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Security Footnote -->
+        <div class="text-center pt-2">
+            <span class="text-[11px] font-mono flex items-center justify-center gap-1.5" style="color: var(--text-faint);">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5" style="color: var(--tea-green);"></i>
+                256-Bit Encrypted Session
+            </span>
+        </div>
+
+    </div>
+
+    <!-- Modular Application Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            initializeTheme();
+            AuthManager.init();
+            await ApiService.init();
+            safeLucide();
+        });
+
+        function safeLucide() {
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('stockpulse_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const icon = document.getElementById('theme-toggle-icon');
+            if (icon) icon.setAttribute('data-lucide', savedTheme === 'dark' ? 'sun' : 'moon');
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'light';
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('stockpulse_theme', next);
+            const icon = document.getElementById('theme-toggle-icon');
+            if (icon) icon.setAttribute('data-lucide', next === 'dark' ? 'sun' : 'moon');
+            safeLucide();
+        }
+
+        function switchAuthTab(tab) {
+            const btnLogin = document.getElementById('tab-btn-login');
+            const btnReg = document.getElementById('tab-btn-register');
+            const viewLogin = document.getElementById('view-login');
+            const viewReg = document.getElementById('view-register');
+            const alertBox = document.getElementById('auth-alert');
+            
+            if (alertBox) alertBox.classList.add('hidden');
+
+            if (tab === 'login') {
+                btnLogin.classList.add('active');
+                btnReg.classList.remove('active');
+                viewLogin.classList.remove('hidden-view');
+                viewLogin.classList.add('active-view');
+                viewReg.classList.remove('active-view');
+                viewReg.classList.add('hidden-view');
+            } else {
+                btnReg.classList.add('active');
+                btnLogin.classList.remove('active');
+                viewReg.classList.remove('hidden-view');
+                viewReg.classList.add('active-view');
+                viewLogin.classList.remove('active-view');
+                viewLogin.classList.add('hidden-view');
+            }
+            safeLucide();
+        }
+
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!input || !icon) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            safeLucide();
+        }
+
+        function checkPasswordStrength() {
+            const pwd = document.getElementById('reg-password').value;
+            const bar = document.getElementById('strength-meter-bar');
+            const txt = document.getElementById('strength-text');
+            if (!bar || !txt) return;
+
+            let strength = 0;
+            if (pwd.length >= 6) strength += 30;
+            if (pwd.length >= 9) strength += 25;
+            if (/[A-Z]/.test(pwd)) strength += 20;
+            if (/[0-9]/.test(pwd)) strength += 15;
+            if (/[^A-Za-z0-9]/.test(pwd)) strength += 10;
+
+            bar.style.width = Math.min(100, strength) + '%';
+            if (strength < 40) {
+                bar.style.backgroundColor = 'var(--badge-out-stock-border)';
+                txt.innerText = 'Weak password';
+                txt.style.color = 'var(--badge-out-stock-text)';
+            } else if (strength < 75) {
+                bar.style.backgroundColor = 'var(--badge-low-stock-border)';
+                txt.innerText = 'Moderate security';
+                txt.style.color = 'var(--badge-low-stock-text)';
+            } else {
+                bar.style.backgroundColor = 'var(--badge-in-stock-border)';
+                txt.innerText = 'Strong password';
+                txt.style.color = 'var(--badge-in-stock-text)';
+            }
+        }
+
+        function fillDemoCredentials(email, pwd) {
+            document.getElementById('login-email').value = email;
+            document.getElementById('login-password').value = pwd;
+        }
+
+        async function fastLoginDemo(email, pwd, role) {
+            fillDemoCredentials(email, pwd);
+            await performLogin(email, pwd);
+        }
+
+        function showAuthAlert(msg, type = 'error') {
+            const alertBox = document.getElementById('auth-alert');
+            if (!alertBox) return;
+
+            let styles = 'background-color: var(--badge-out-stock-bg); color: var(--badge-out-stock-text); border-color: var(--badge-out-stock-border);';
+            let icon = 'alert-circle';
+            if (type === 'success') {
+                styles = 'background-color: var(--tea-green); color: var(--badge-in-stock-text); border-color: var(--badge-in-stock-border);';
+                icon = 'check-circle-2';
+            }
+
+            alertBox.style.cssText = styles;
+            alertBox.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 flex-shrink-0"></i> <span>${msg}</span>`;
+            alertBox.classList.remove('hidden');
+            safeLucide();
+        }
+
+        async function performLogin(email, password) {
+            const btn = document.getElementById('btn-submit-login');
+            try {
+                if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Authenticating...`;
+                safeLucide();
+
+                const response = await ApiService.login(email, password);
+                AuthManager.setSession(response.user, response.token);
+                showAuthAlert('Authenticated! Entering workspace...', 'success');
+
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 400);
+
+            } catch (err) {
+                showAuthAlert(err.message || 'Login failed', 'error');
+                if (btn) btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i> <span>Enter Warehouse Workspace</span>`;
+                safeLucide();
+            }
+        }
+
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            await performLogin(email, password);
+        }
+
+        async function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const role = document.getElementById('reg-role').value;
+            const password = document.getElementById('reg-password').value;
+            const confirmPwd = document.getElementById('reg-confirm-password').value;
+
+            if (password !== confirmPwd) {
+                showAuthAlert('Passwords do not match. Please re-enter.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-reg');
+            try {
+                if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Creating Profile...`;
+                safeLucide();
+
+                const response = await ApiService.register(name, email, password, role);
+                AuthManager.setSession(response.user, response.token);
+                showAuthAlert('Account created successfully! Redirecting...', 'success');
+
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 500);
+
+            } catch (err) {
+                showAuthAlert(err.message || 'Registration failed', 'error');
+                if (btn) btn.innerHTML = `<i data-lucide="user-plus" class="w-4 h-4"></i> <span>Register & Launch Workspace</span>`;
+                safeLucide();
+            }
+        }
+    </script>
+</body>
+</html>

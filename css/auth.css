@@ -1,0 +1,194 @@
+/* ==========================================================================
+   STOCKPULSE NEXTGEN - AUTH & LOGIN ANIMATIONS
+   ========================================================================== */
+
+/* Fullscreen Auth Canvas */
+.auth-canvas {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--bg-page);
+}
+
+/* Glassmorphism Auth Card */
+.auth-card {
+    width: 100%;
+    max-width: 460px;
+    background-color: var(--card-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    z-index: 10;
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+    animation: authCardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes authCardEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(30px) scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Floating Brand Badge with Pulsing Halo */
+.auth-logo-badge {
+    position: relative;
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--tea-green), var(--light-bronze));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-bronze);
+    animation: badgeBob 4s ease-in-out infinite alternate;
+}
+
+@keyframes badgeBob {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-6px);
+    }
+}
+
+/* Animated Tab Switcher (Sign In vs Create Account) */
+.auth-tabs-pill {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background-color: var(--card-surface-soft);
+    border: 1px solid var(--border-subtle);
+    border-radius: 1rem;
+    padding: 4px;
+    position: relative;
+}
+
+.auth-tab-btn {
+    padding: 0.65rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    border: none;
+    background: transparent;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 2;
+    text-align: center;
+}
+
+.auth-tab-btn.active {
+    color: var(--bronze-deepest);
+    background-color: var(--tea-green);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Auth Sliding Panel Viewport */
+.auth-view-container {
+    position: relative;
+    overflow: hidden;
+    transition: min-height 0.35s ease;
+}
+
+.auth-view {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+.auth-view.hidden-view {
+    display: none;
+    opacity: 0;
+    transform: translateX(40px);
+}
+
+.auth-view.active-view {
+    display: block;
+    opacity: 1;
+    transform: translateX(0);
+    animation: slideInView 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInView {
+    from {
+        opacity: 0;
+        transform: translateX(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Password Strength Animated Meter */
+.strength-track {
+    height: 4px;
+    background-color: var(--border-subtle);
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.strength-bar {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    border-radius: 9999px;
+}
+
+/* Demo Role Pills */
+.demo-role-pill {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.65rem;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--card-surface-soft);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.demo-role-pill:hover {
+    background-color: var(--cornsilk);
+    border-color: var(--light-bronze);
+    color: var(--bronze-deepest);
+    transform: translateY(-1px);
+}
+
+/* Success Checkmark Animated Morph */
+.checkmark-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--tea-green);
+    color: var(--badge-in-stock-text);
+    margin: 0 auto;
+    animation: checkmarkPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes checkmarkPop {
+    0% {
+        transform: scale(0) rotate(-45deg);
+        opacity: 0;
+    }
+    80% {
+        transform: scale(1.15) rotate(5deg);
+    }
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
